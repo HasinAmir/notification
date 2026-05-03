@@ -8,11 +8,6 @@ const subSchema = new mongoose.Schema({
     topic: {
         type: String,
         required: true
-    },
-
-    createdAt: {
-        type: Date,
-        default: Date.now()
     }
 }, { timestamps: true });
 

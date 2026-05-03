@@ -1,4 +1,4 @@
-const mongoose = require('momgoose');
+const mongoose = require('mongoose');
 
 const notifySchema = new mongoose.Schema({
     topic: {
@@ -6,13 +6,10 @@ const notifySchema = new mongoose.Schema({
         required: true
     },
     message: {
-        type: Object,
+        type: String,
         required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now()
     }
+
 
 }, { timestamps: true });
 

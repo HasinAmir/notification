@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Notification Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #login {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 300px;
+        }
+
+        #app {
+            display: none;
+            flex-direction: column;
+            width: 500px;
+            height: 600px;
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #notifications {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notification {
+            background: #0f3460;
+            padding: 10px 14px;
+            border-radius: 8px;
+        }
+
+        .notification .topic {
+            font-size: 11px;
+            color: #4f8ef7;
+            margin-bottom: 4px;
+        }
+
+        #input-area {
+            display: flex;
+            padding: 12px;
+            gap: 8px;
+            background: #0f3460;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: white;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #4f8ef7;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3a7bd5;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #4f8ef7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login">
+        <h2>Notification Service</h2>
+        <input id="username-input" placeholder="Enter username" />
+        <input id="topic-input" placeholder="Enter topic (e.g. tech, sports)" />
+        <button onclick="subscribe()">Subscribe</button>
+    </div>
+
+    <div id="app">
+        <div id="notifications"></div>
+        <div id="input-area">
+            <input id="message-input" placeholder="Publish a notification..."
+                onkeydown="if(event.key==='Enter') publish()" />
+            <button onclick="publish()">Publish</button>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let username;
+        let topic;
+
+        function subscribe() {
+            username = document.getElementById('username-input').value.trim();
+            topic = document.getElementById('topic-input').value.trim();
+            if (!username || !topic) return alert('Enter username and topic!');
+
+            ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                // hide login, show app
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+
+                // tell server our username and topic
+                ws.send(JSON.stringify({ username, topic }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'subscribed') {
+                    addNotification('System', `Subscribed to "${data.topic}" ✅`);
+                }
+
+                if (data.type === 'history') {
+                    data.messages.forEach(n => addNotification(n.topic, n.message));
+                }
+
+                if (data.type === 'notification') {
+                    addNotification(data.notification.topic, data.notification.message);
+                }
+            };
+
+            ws.onclose = () => {
+                addNotification('System', 'Disconnected from server');
+            };
+        }
+
+        function publish() {
+            const message = document.getElementById('message-input').value.trim();
+            if (!message) return;
+            ws.send(JSON.stringify({ topic, message }));
+            document.getElementById('message-input').value = '';
+        }
+
+        function addNotification(topic, message) {
+            const container = document.getElementById('notifications');
+            const div = document.createElement('div');
+            div.className = 'notification';
+            div.innerHTML = `<div class="topic">${topic}</div><div>${message}</div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
