@@ -45,7 +45,7 @@ wss.on('connection', async (ws) => {
         }
 
         // step 3: if user is publishing a notification
-        const saved = await Notification.create({ topic, message });
+        const saved = await Notification.create({ username, topic, message });
         await pub.publish(topic, JSON.stringify({
             type: 'notification',
             notification: saved
